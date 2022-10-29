@@ -34,20 +34,38 @@ local function createPeds()
         SetEntityInvincible(WhitelistShopPed[k], true)
         SetBlockingOfNonTemporaryEvents(WhitelistShopPed[k], true)
         
-        exports['qb-target']:AddTargetEntity(WhitelistShopPed[k], {
-            options = {
-                {
-                    type = "client",
-                    event = "rst-whitelistedshop:client:openWhiteListVehicleShop",
-                    icon = 'fas fa-certificate',
-                    label = "Open ".. v['label'],
-                    job = v['job'],
-                    shopLabel = v['label'],
-                    defaultGarage = v['defaultGarage']
-                }
-            },
-            distance = 2.0
-        })
+        if v['isGang'] then
+            exports['qb-target']:AddTargetEntity(WhitelistShopPed[k], {
+                options = {
+                    {
+                        type = "client",
+                        event = "rst-whitelistedshop:client:openWhiteListVehicleShop",
+                        icon = 'fas fa-certificate',
+                        label = "Open ".. v['label'],
+                        gang = v['gang'],
+                        isGang = v['isGang'],
+                        shopLabel = v['label'],
+                        defaultGarage = v['defaultGarage']
+                    }
+                },
+                distance = 2.0
+            })
+        else
+            exports['qb-target']:AddTargetEntity(WhitelistShopPed[k], {
+                options = {
+                    {
+                        type = "client",
+                        event = "rst-whitelistedshop:client:openWhiteListVehicleShop",
+                        icon = 'fas fa-certificate',
+                        label = "Open ".. v['label'],
+                        job = v['job'],
+                        shopLabel = v['label'],
+                        defaultGarage = v['defaultGarage']
+                    }
+                },
+                distance = 2.0
+            })
+        end
     end
 
     pedSpawned = true
@@ -75,8 +93,25 @@ RegisterNetEvent('rst-whitelistedshop:client:openWhiteListVehicleShop', function
             isMenuHeader = true
         },
     }
-    for k,v in pairs(Config.Vehicles[data.job]) do
-        if xPlayer.job.grade.level >= v['minGrade'] then
+    local KeyName = data.job or data.gang
+    for k,v in pairs(Config.Vehicles[KeyName]) do
+        if not data.isGang and xPlayer.job.grade.level >= v['minGrade'] then
+            VehicleShopMenus[#VehicleShopMenus+1] = {
+                header = QBCore.Shared.Vehicles[v['name']].name,
+                txt = "Price: $" .. v['price'],
+                icon = "fa-solid fa-car",
+                params = {
+                    isServer = false,
+                    event = "rst-whitelistedshop:client:openConfirmationMenu",
+                    args = {
+                        vehicleName = v['name'],
+                        vehicleLabel = QBCore.Shared.Vehicles[v['name']].name,
+                        vehiclePrices = v['price'],
+                        defaultGarage = data.defaultGarage
+                    }
+                }
+            }
+        elseif data.isGang and xPlayer.gang.grade.level >= v['minGrade'] then
             VehicleShopMenus[#VehicleShopMenus+1] = {
                 header = QBCore.Shared.Vehicles[v['name']].name,
                 txt = "Price: $" .. v['price'],
